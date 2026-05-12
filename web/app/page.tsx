@@ -5,6 +5,7 @@ import { ExternalLink, Filter, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getSupabase } from "@/lib/supabase";
+import { isSharedHousing } from "@/lib/sharedHousing";
 import type { Listing } from "@/lib/types";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
@@ -62,7 +63,7 @@ export default function Home() {
     const { data, error } = await supabase
       .from("v_active_listings")
       .select(
-        "id,source,source_id,url,title,price_czk,price_per_m2,size_m2,rooms,district,address,lat,lon,days_on_market,first_seen_at,last_seen_at",
+        "id,source,source_id,url,title,price_czk,price_per_m2,size_m2,rooms,district,address,lat,lon,days_on_market,first_seen_at,last_seen_at,raw",
       )
       .order("first_seen_at", { ascending: false })
       .limit(500);
@@ -82,9 +83,11 @@ export default function Home() {
   }, []);
 
   const options = useMemo(() => {
+    const sharedListings = listings.filter(isSharedHousing);
+
     return {
-      sources: Array.from(new Set(listings.map((item) => item.source))).sort(),
-      rooms: Array.from(new Set(listings.map((item) => item.rooms).filter(Boolean))).sort() as string[],
+      sources: Array.from(new Set(sharedListings.map((item) => item.source))).sort(),
+      rooms: Array.from(new Set(sharedListings.map((item) => item.rooms).filter(Boolean))).sort() as string[],
     };
   }, [listings]);
 
@@ -94,6 +97,7 @@ export default function Home() {
     const minSize = filters.minSize ? Number(filters.minSize) : null;
 
     return listings.filter((listing) => {
+      if (!isSharedHousing(listing)) return false;
       if (filters.source !== "all" && listing.source !== filters.source) return false;
       if (filters.rooms !== "all" && listing.rooms !== filters.rooms) return false;
       if (maxPrice && (!listing.price_czk || listing.price_czk > maxPrice)) return false;
@@ -133,7 +137,7 @@ export default function Home() {
       <header className="topbar">
         <div>
           <h1>Spolubydleni Praha</h1>
-          <p>Aktivni pronajmy z agregovane databaze</p>
+          <p>Pokoje a nabidky vhodne pro spolubydleni</p>
         </div>
         <button className="icon-button" onClick={loadListings} aria-label="Obnovit data">
           <RefreshCcw size={18} />
@@ -234,7 +238,7 @@ export default function Home() {
                   <td colSpan={6}>Nacitam data...</td>
                 </tr>
               ) : (
-                filteredListings.map((listing) => (
+                filteredListings.length ? filteredListings.map((listing) => (
                   <tr
                     key={listing.id}
                     className={selectedListing?.id === listing.id ? "selected" : ""}
@@ -254,7 +258,11 @@ export default function Home() {
                       </a>
                     </td>
                   </tr>
-                ))
+                )) : (
+                  <tr>
+                    <td colSpan={6}>Zadne nabidky spolubydleni pro aktualni filtr.</td>
+                  </tr>
+                )
               )}
             </tbody>
           </table>

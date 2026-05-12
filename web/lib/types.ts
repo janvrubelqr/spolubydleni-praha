@@ -15,4 +15,5 @@ export type Listing = {
   days_on_market: number | null;
   first_seen_at: string;
   last_seen_at: string;
+  raw?: unknown;
 };
