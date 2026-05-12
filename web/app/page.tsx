@@ -138,8 +138,8 @@ export default function Home() {
     <main>
       <header className="topbar">
         <div>
-          <h1>Spolubydleni Praha</h1>
-          <p>Pronajmy, pokoje a nabidky vhodne pro spolubydleni</p>
+          <h1>Spolubydlení Praha</h1>
+          <p>Pronájmy, pokoje a nabídky vhodné pro spolubydlení</p>
         </div>
         <button className="icon-button" onClick={loadListings} aria-label="Obnovit data">
           <RefreshCcw size={18} />
@@ -148,16 +148,16 @@ export default function Home() {
 
       <section className="stats-grid">
         <div>
-          <span>Inzeratu</span>
+          <span>Inzerátů</span>
           <strong>{formatNumber(stats.count)}</strong>
         </div>
         <div>
-          <span>Prumerna cena</span>
+          <span>Průměrná cena</span>
           <strong>{formatPrice(stats.priceAvg)}</strong>
         </div>
         <div>
           <span>Cena / m2</span>
-          <strong>{stats.priceM2Avg ? `${formatNumber(stats.priceM2Avg)} Kc` : "-"}</strong>
+          <strong>{stats.priceM2Avg ? `${formatNumber(stats.priceM2Avg)} Kč` : "-"}</strong>
         </div>
         <div>
           <span>Na mape</span>
@@ -166,11 +166,11 @@ export default function Home() {
       </section>
 
       <section className="filters" aria-label="Filtry">
-        <div className="pill-group" aria-label="Typ bydleni">
+        <div className="pill-group" aria-label="Typ bydlení">
           {[
-            ["all", "Vsechny moznosti"],
-            ["shared", "Spolubydleni"],
-            ["whole", "Cele byty"],
+            ["all", "Všechny možnosti"],
+            ["shared", "Spolubydlení"],
+            ["whole", "Celé byty"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -187,7 +187,7 @@ export default function Home() {
           <input
             value={filters.query}
             onChange={(event) => setFilters({ ...filters, query: event.target.value })}
-            placeholder="Hledat adresu, cast nebo zdroj"
+            placeholder="Hledat adresu, část nebo zdroj"
           />
         </label>
         <div className="filter-pills" aria-label="Zdroj">
@@ -198,7 +198,7 @@ export default function Home() {
               className={filters.source === "all" ? "pill active" : "pill"}
               onClick={() => setFilters({ ...filters, source: "all" })}
             >
-              Vsechny
+              Všechny
             </button>
             {options.sources.map((source) => (
               <button
@@ -220,7 +220,7 @@ export default function Home() {
               className={filters.rooms === "all" ? "pill active" : "pill"}
               onClick={() => setFilters({ ...filters, rooms: "all" })}
             >
-              Vsechny
+              Všechny
             </button>
             {options.rooms.map((rooms) => (
               <button
@@ -235,7 +235,7 @@ export default function Home() {
           </div>
         </div>
         <label>
-          <span>Max Kc</span>
+          <span>Max Kč</span>
           <input
             type="number"
             min="0"
@@ -272,7 +272,7 @@ export default function Home() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6}>Nacitam data...</td>
+                  <td colSpan={6}>Načítám data...</td>
                 </tr>
               ) : (
                 filteredListings.length ? filteredListings.map((listing) => (
@@ -290,14 +290,14 @@ export default function Home() {
                     </td>
                     <td>{listing.source}</td>
                     <td>
-                      <a href={listing.url} target="_blank" rel="noreferrer" aria-label="Otevrit inzerat">
+                      <a href={listing.url} target="_blank" rel="noreferrer" aria-label="Otevřít inzerát">
                         <ExternalLink size={16} />
                       </a>
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={6}>Zadne nabidky pro aktualni filtr.</td>
+                    <td colSpan={6}>Žádné nabídky pro aktuální filtr.</td>
                   </tr>
                 )
               )}

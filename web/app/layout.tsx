@@ -4,8 +4,8 @@ import "./styles.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Spolubydleni Praha",
-  description: "Analyticky dashboard prazskych pronajmu",
+  title: "Spolubydlení Praha",
+  description: "Analytický dashboard pražských pronájmů",
 };
 
 export default function RootLayout({

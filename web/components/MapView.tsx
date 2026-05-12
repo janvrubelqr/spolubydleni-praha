@@ -51,7 +51,7 @@ export default function MapView({ listings, selectedId, onSelect }: MapViewProps
                 <strong>{formatPrice(listing.price_czk)}</strong>
                 <span>{listing.rooms ?? "Byt"} · {listing.size_m2 ?? "?"} m2</span>
                 <a href={listing.url} target="_blank" rel="noreferrer">
-                  Otevrit inzerat
+                  Otevřít inzerát
                 </a>
               </Popup>
             </Marker>
@@ -60,7 +60,7 @@ export default function MapView({ listings, selectedId, onSelect }: MapViewProps
       ) : (
         <div className="empty-map">
           <MapPin size={24} />
-          <span>Zadne souradnice pro aktualni filtr</span>
+          <span>Žádné souřadnice pro aktuální filtr</span>
         </div>
       )}
     </div>
