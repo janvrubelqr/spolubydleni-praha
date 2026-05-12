@@ -8,7 +8,9 @@ do jednotneho schematu v Supabase Postgres a poskytuje data pro analyticke UI.
 ```text
 scrapers/        Per-portal scrapery (Sreality, Realingo, Bezrealitky, ...)
 shared/          Datove modely a Supabase repository
-001_init.sql     SQL migrace
+db/              SQL migrace
+tools/           Jednorazove ladici skripty a notebooky
+web/             Next.js dashboard nad Supabase daty
 ```
 
 Tok dat: scraper -> `ListingRecord` (Pydantic) -> `SupabaseRepo.upsert_listing()` -> Postgres
@@ -18,7 +20,7 @@ Tok dat: scraper -> `ListingRecord` (Pydantic) -> `SupabaseRepo.upsert_listing()
 ### 1. Supabase projekt
 
 1. Vytvor projekt na <https://supabase.com/dashboard>
-2. V SQL Editoru pust `001_init.sql`
+2. V SQL Editoru pust `db/001_init.sql`
 3. V Settings -> API si vezmi:
    - `Project URL` -> `SUPABASE_URL`
    - `service_role` key -> `SUPABASE_SERVICE_KEY`
@@ -48,12 +50,26 @@ python -m scrapers.realingo
 Po dobehnuti zkontroluj v Supabase tabulky `listings`, `price_history` a
 `scrape_runs`.
 
+### 4. Web UI
+
+```bash
+cd web
+npm install
+copy .env.example .env.local
+npm run dev
+```
+
+Do `web/.env.local` patri `NEXT_PUBLIC_SUPABASE_URL` a anon klic
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`. Service role klic do webu nepatri.
+
 ## Co je hotove
 
 - [x] Schema s PostGIS, `price_history`, `scrape_runs`
 - [x] RLS: UI bude cist pres anon klic, scrapery zapisuji pres service key
 - [x] Sreality scraper pres verejne JSON API
 - [x] Realingo scraper pres Next.js `__NEXT_DATA__` na prvni strance vysledku
+- [x] Realingo strankovani pres GraphQL `first`/`skip`
+- [x] Next.js dashboard s filtry, tabulkou a mapou
 - [x] Idempotentni upsert pres `(source, source_id)`
 - [x] Tracking zmen cen v `price_history`
 - [x] Auto-detekce delistingu pro zdroje s kompletnim pokrytim
@@ -67,20 +83,18 @@ behu oznacuje zmizele inzeraty jako `delisted_at`.
 
 ### Realingo
 
-Realingo vraci vysledky server-side v Next.js `__NEXT_DATA__`. Scraper aktualne
-bere prvni stranku `https://www.realingo.cz/pronajem_reality/Praha/`, filtruje
-jen `purpose=RENT` a `property=FLAT`, a uklada cenu, dispozici, plochu, adresu a
-GPS souradnice.
+Realingo vraci prvni vysledky server-side v Next.js `__NEXT_DATA__`, ale dalsi
+stranky nacita pres GraphQL. Scraper pouziva GraphQL `first`/`skip`, filtruje
+`purpose=RENT`, `property=FLAT` a `address=Praha`, a uklada cenu, dispozici,
+plochu, adresu a GPS souradnice.
 
-Delisting je pro Realingo zatim vypnuty, protoze jeste neni implementovane
-strankovani. Tim se zabrani tomu, aby prvni stranka omylem oznacila starsi
-Realingo inzeraty jako zmizele.
+Delisting se pro Realingo spusti jen tehdy, kdyz scraper projde vsechny dostupne
+stranky. Pocet stran lze omezit pres `REALINGO_MAX_PAGES`.
 
 ## Co nasleduje
 
 **Faze 2 - dalsi portaly:**
 
-- [ ] Dodelat strankovani Realingo
 - [ ] Ulovdomov (studenti + spolubydleni)
 - [ ] Bezrealitky (Playwright + proxy, GraphQL je za antibotem)
 - [ ] Flatio (kratkodobe pronajmy)

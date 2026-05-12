@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
+import math
+import os
 import re
 import time
 from typing import Any, Iterator, Optional
@@ -23,6 +25,8 @@ log = logging.getLogger(__name__)
 
 BASE_URL = "https://www.realingo.cz"
 SEARCH_URL = f"{BASE_URL}/pronajem_reality/Praha/"
+GRAPHQL_URL = f"{BASE_URL}/graphql"
+PAGE_SIZE = 40
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -31,6 +35,54 @@ HEADERS = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 }
+GRAPHQL_HEADERS = {
+    **HEADERS,
+    "Content-Type": "application/json",
+    "Origin": BASE_URL,
+    "Referer": SEARCH_URL,
+}
+
+SEARCH_OFFER_QUERY = """
+query SearchOffer($filter: OfferFilterInput!, $sort: OfferSort, $first: Int, $skip: Int) {
+  searchOffer(filter: $filter, sort: $sort, first: $first, skip: $skip) {
+    total
+    items {
+      id
+      url
+      purpose
+      property
+      createdAt
+      category
+      price {
+        total
+        canonical
+        currency
+      }
+      area {
+        main
+        plot
+      }
+      photos {
+        main
+        list
+      }
+      location {
+        address
+        addressUrl
+        locationPrecision
+        latitude
+        longitude
+      }
+    }
+    location {
+      id
+      type
+      url
+      name
+    }
+  }
+}
+"""
 
 CATEGORY_TO_ROOMS = {
     "FLAT1_KK": "1+kk",
@@ -102,6 +154,35 @@ def _extract_offers(html: str) -> list[dict[str, Any]]:
     return [offer for offer in offers if isinstance(offer, dict)]
 
 
+def _fetch_page(client: httpx.Client, page: int) -> tuple[list[dict[str, Any]], int]:
+    variables = {
+        "filter": {
+            "purpose": "RENT",
+            "property": "FLAT",
+            "address": "Praha",
+        },
+        "sort": "NEWEST",
+        "first": PAGE_SIZE,
+        "skip": (page - 1) * PAGE_SIZE,
+    }
+    resp = client.post(
+        GRAPHQL_URL,
+        headers=GRAPHQL_HEADERS,
+        json={"query": SEARCH_OFFER_QUERY, "variables": variables},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+
+    if payload.get("errors"):
+        raise ValueError(f"Realingo GraphQL returned errors: {payload['errors']}")
+
+    result = (payload.get("data") or {}).get("searchOffer") or {}
+    total = result.get("total") or 0
+    items = result.get("items") or []
+    return [item for item in items if isinstance(item, dict)], int(total)
+
+
 def _to_record(item: dict[str, Any]) -> ListingRecord:
     location = item.get("location") or {}
     price = item.get("price") or {}
@@ -146,28 +227,32 @@ def _is_target_offer(item: dict[str, Any]) -> bool:
     )
 
 
-def iter_listings(client: httpx.Client, max_pages: int = 1) -> Iterator[dict[str, Any]]:
-    if max_pages != 1:
-        log.warning("Realingo pagination is not implemented yet; fetching the first page only")
+def iter_listings(client: httpx.Client, max_pages: int = 100) -> Iterator[dict[str, Any]]:
+    for page in range(1, max_pages + 1):
+        log.info("Realingo GraphQL page %d", page)
+        offers, total = _fetch_page(client, page)
+        filtered = [offer for offer in offers if _is_target_offer(offer)]
+        log.info("Realingo page %d: %d/%d offers", page, len(filtered), total)
 
-    log.info("Realingo search page 1")
-    resp = client.get(SEARCH_URL, headers=HEADERS, timeout=30.0)
-    resp.raise_for_status()
+        if not filtered:
+            break
 
-    offers = _extract_offers(resp.text)
-    filtered = [offer for offer in offers if _is_target_offer(offer)]
-    log.info("Realingo offers on page: %d, target flat rentals: %d", len(offers), len(filtered))
+        yield from filtered
 
-    yield from filtered
-    time.sleep(1.0)
+        if page >= math.ceil(total / PAGE_SIZE):
+            break
 
-
-def _has_complete_coverage(max_pages: int) -> bool:
-    return False
+        time.sleep(1.0)
 
 
-def run(max_pages: int = 1) -> None:
+def _default_max_pages() -> int:
+    value = os.getenv("REALINGO_MAX_PAGES")
+    return int(value) if value else 100
+
+
+def run(max_pages: Optional[int] = None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    max_pages = max_pages or _default_max_pages()
     repo = SupabaseRepo()
     run_id = repo.start_run("realingo")
 
@@ -175,29 +260,49 @@ def run(max_pages: int = 1) -> None:
     new = 0
     updated = 0
     active_ids: list[str] = []
+    total_offers: Optional[int] = None
+    pages_fetched = 0
 
     try:
         with httpx.Client(follow_redirects=True) as client:
-            for item in iter_listings(client, max_pages=max_pages):
-                try:
-                    rec = _to_record(item)
-                except Exception:
-                    log.exception("Failed to parse Realingo item %s", item.get("id"))
-                    continue
+            for page in range(1, max_pages + 1):
+                log.info("Realingo GraphQL page %d", page)
+                items, total_offers = _fetch_page(client, page)
+                pages_fetched = page
+                log.info("Realingo page %d: %d/%d offers", page, len(items), total_offers)
 
-                active_ids.append(rec.source_id)
-                _, is_new = repo.upsert_listing(rec)
-                seen += 1
-                if is_new:
-                    new += 1
-                else:
-                    updated += 1
+                if not items:
+                    break
 
-                if seen % 50 == 0:
-                    log.info("Realingo processed %d (new=%d, updated=%d)", seen, new, updated)
+                for item in items:
+                    if not _is_target_offer(item):
+                        continue
+
+                    try:
+                        rec = _to_record(item)
+                    except Exception:
+                        log.exception("Failed to parse Realingo item %s", item.get("id"))
+                        continue
+
+                    active_ids.append(rec.source_id)
+                    _, is_new = repo.upsert_listing(rec)
+                    seen += 1
+                    if is_new:
+                        new += 1
+                    else:
+                        updated += 1
+
+                    if seen % 50 == 0:
+                        log.info("Realingo processed %d (new=%d, updated=%d)", seen, new, updated)
+
+                if page >= math.ceil(total_offers / PAGE_SIZE):
+                    break
+
+                time.sleep(1.0)
 
         delisted = 0
-        if _has_complete_coverage(max_pages):
+        complete_coverage = total_offers is not None and pages_fetched >= math.ceil(total_offers / PAGE_SIZE)
+        if complete_coverage:
             delisted = repo.mark_delisted("realingo", active_ids)
             log.info("Marked as delisted: %d", delisted)
         else:
