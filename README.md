@@ -62,7 +62,9 @@ npm run dev
 ```
 
 Do `web/.env.local` patri `NEXT_PUBLIC_SUPABASE_URL` a anon klic
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`. Service role klic do webu nepatri.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`. Pro serverovy rucni import z dashboardu pridej
+take `SUPABASE_SERVICE_KEY`. Nepouzivej prefix `NEXT_PUBLIC_`, service key nesmi
+byt dostupny v browseru.
 
 ## Co je hotove
 
@@ -73,6 +75,7 @@ Do `web/.env.local` patri `NEXT_PUBLIC_SUPABASE_URL` a anon klic
 - [x] Realingo strankovani pres GraphQL `first`/`skip`
 - [x] UlovDomov scraper pres verejne JSON API
 - [x] Spolecny runner pro vsechny scrapery
+- [x] Rucni Facebook import pres serverovy Next.js endpoint
 - [x] Next.js dashboard s filtry, tabulkou a mapou
 - [x] Idempotentni upsert pres `(source, source_id)`
 - [x] Tracking zmen cen v `price_history`
@@ -117,6 +120,14 @@ Vychozi zdroje jsou `sreality,realingo,ulovdomov`. Vyber lze zmenit pres
 ```bash
 SCRAPER_SOURCES=realingo,ulovdomov python -m scrapers.run_all
 ```
+
+### Facebook
+
+Facebook skupiny se nescrapuji automaticky. Meta omezuje automatizovany sber
+dat a pristup ke skupinam, proto je v dashboardu bezpecnejsi rucni import:
+zkopiruj text prispevku, volitelne pridej odkaz a aplikace ulozi zaznam jako
+zdroj `facebook_manual`. Import se pokusi vytahnout cenu, plochu, dispozici a
+cast Prahy primo z textu prispevku.
 
 ## Co nasleduje
 

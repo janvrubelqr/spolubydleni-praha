@@ -187,6 +187,71 @@ p {
   padding: 12px;
 }
 
+.manual-import {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  margin: 0 auto 14px;
+  max-width: 1440px;
+  padding: 12px;
+}
+
+.manual-import-title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.manual-import textarea {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 96px;
+  padding: 10px;
+  resize: vertical;
+  width: 100%;
+}
+
+.manual-import-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.manual-import input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 40px;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.manual-import button {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.manual-import button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.manual-import > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .workspace {
   display: grid;
   gap: 14px;
@@ -316,6 +381,10 @@ td a {
   }
 
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-import-actions {
     grid-template-columns: 1fr;
   }
 

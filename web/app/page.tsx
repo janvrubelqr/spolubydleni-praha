@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { ExternalLink, RefreshCcw, Search } from "lucide-react";
+import { ClipboardPlus, ExternalLink, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getSupabase } from "@/lib/supabase";
@@ -47,6 +47,7 @@ function formatSource(source: string) {
     sreality: "Sreality",
     realingo: "Realingo",
     ulovdomov: "UlovDomov",
+    facebook_manual: "Facebook",
   };
   return labels[source] ?? source;
 }
@@ -55,6 +56,10 @@ export default function Home() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [importText, setImportText] = useState("");
+  const [importUrl, setImportUrl] = useState("");
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,6 +97,33 @@ export default function Home() {
   useEffect(() => {
     loadListings();
   }, []);
+
+  async function importFacebookPost() {
+    setImporting(true);
+    setImportStatus(null);
+
+    try {
+      const response = await fetch("/api/manual-listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "facebook", text: importText, url: importUrl }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Import selhal.");
+      }
+
+      setImportText("");
+      setImportUrl("");
+      setImportStatus("Facebook příspěvek je uložený.");
+      await loadListings();
+    } catch (error) {
+      setImportStatus(error instanceof Error ? error.message : "Import selhal.");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   const options = useMemo(() => {
     return {
@@ -264,6 +296,29 @@ export default function Home() {
       </section>
 
       {error ? <div className="error">{error}</div> : null}
+
+      <section className="manual-import" aria-label="Ruční Facebook import">
+        <div className="manual-import-title">
+          <ClipboardPlus size={18} />
+          <strong>Facebook import</strong>
+        </div>
+        <textarea
+          value={importText}
+          onChange={(event) => setImportText(event.target.value)}
+          placeholder="Vlož sem text příspěvku ze skupiny..."
+        />
+        <div className="manual-import-actions">
+          <input
+            value={importUrl}
+            onChange={(event) => setImportUrl(event.target.value)}
+            placeholder="Odkaz na příspěvek"
+          />
+          <button type="button" onClick={importFacebookPost} disabled={importing || importText.trim().length < 20}>
+            {importing ? "Ukládám..." : "Uložit"}
+          </button>
+        </div>
+        {importStatus ? <span>{importStatus}</span> : null}
+      </section>
 
       <section className="workspace">
         <div className="table-wrap">
