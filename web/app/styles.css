@@ -93,10 +93,41 @@ p {
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(240px, 1fr) 170px 160px 160px 120px 120px;
+  grid-template-columns: minmax(350px, auto) minmax(240px, 1fr) 160px 160px 120px 120px;
   margin: 0 auto 14px;
   max-width: 1440px;
   padding: 10px;
+}
+
+.pill-group {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pill {
+  background: #f7f9f5;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  min-height: 36px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.pill:hover {
+  border-color: #a9b5aa;
+  color: var(--text);
+}
+
+.pill.active {
+  background: #dff2ef;
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
 }
 
 .filters label {
@@ -249,6 +280,11 @@ td a {
     grid-template-columns: 1fr 1fr;
   }
 
+  .pill-group {
+    grid-column: 1 / -1;
+    overflow-x: auto;
+  }
+
   .search-field {
     grid-column: 1 / -1;
   }
@@ -272,6 +308,15 @@ td a {
   .stats-grid,
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .pill-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pill {
+    width: 100%;
   }
 
   th:nth-child(3),

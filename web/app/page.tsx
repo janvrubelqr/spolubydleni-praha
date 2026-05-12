@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { ExternalLink, Filter, RefreshCcw, Search } from "lucide-react";
+import { ExternalLink, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getSupabase } from "@/lib/supabase";
@@ -166,6 +166,22 @@ export default function Home() {
       </section>
 
       <section className="filters" aria-label="Filtry">
+        <div className="pill-group" aria-label="Typ bydleni">
+          {[
+            ["all", "Vsechny moznosti"],
+            ["shared", "Spolubydleni"],
+            ["whole", "Cele byty"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={filters.housingType === value ? "pill active" : "pill"}
+              onClick={() => setFilters({ ...filters, housingType: value })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <label className="search-field">
           <Search size={18} />
           <input
@@ -173,17 +189,6 @@ export default function Home() {
             onChange={(event) => setFilters({ ...filters, query: event.target.value })}
             placeholder="Hledat adresu, cast nebo zdroj"
           />
-        </label>
-        <label>
-          <Filter size={16} />
-          <select
-            value={filters.housingType}
-            onChange={(event) => setFilters({ ...filters, housingType: event.target.value })}
-          >
-            <option value="all">Vsechny moznosti</option>
-            <option value="shared">Spolubydleni</option>
-            <option value="whole">Cele byty</option>
-          </select>
         </label>
         <label>
           <span>Zdroj</span>
