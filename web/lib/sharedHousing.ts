@@ -16,6 +16,18 @@ const POSITIVE_TERMS = [
   "studentky",
 ];
 
+const ROOM_TERMS = [
+  "pokoj k pronajmu",
+  "pronajem pokoje",
+  "pronajmu pokoj",
+  "samostatny pokoj",
+  "volny pokoj",
+  "volne misto",
+  "hledam spolubydlici",
+  "room for rent",
+  "single room",
+];
+
 const NEGATIVE_TERMS = [
   "neni vhodne pro spolubydleni",
   "není vhodné pro spolubydlení",
@@ -46,4 +58,24 @@ export function isSharedHousing(listing: Listing) {
   }
 
   return POSITIVE_TERMS.some((term) => text.includes(normalize(term)));
+}
+
+export function isRoomOffer(listing: Listing) {
+  if (normalize(listing.rooms) === "pokoj") {
+    return true;
+  }
+
+  const text = normalize([
+    listing.title,
+    listing.address,
+    listing.district,
+    listing.url,
+    listing.raw ? JSON.stringify(listing.raw) : "",
+  ].join(" "));
+
+  if (NEGATIVE_TERMS.some((term) => text.includes(normalize(term)))) {
+    return false;
+  }
+
+  return ROOM_TERMS.some((term) => text.includes(normalize(term))) || /\bpokoj\b/.test(text);
 }

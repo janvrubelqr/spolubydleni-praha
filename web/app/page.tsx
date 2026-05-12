@@ -5,7 +5,7 @@ import { ClipboardPlus, ExternalLink, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getSupabase } from "@/lib/supabase";
-import { isSharedHousing } from "@/lib/sharedHousing";
+import { isRoomOffer, isSharedHousing } from "@/lib/sharedHousing";
 import type { Listing } from "@/lib/types";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
@@ -21,7 +21,7 @@ type Filters = {
 
 const initialFilters: Filters = {
   query: "",
-  housingType: "all",
+  housingType: "room",
   source: "all",
   rooms: "all",
   maxPrice: "",
@@ -146,6 +146,8 @@ export default function Home() {
 
     return listings.filter((listing) => {
       const sharedHousing = isSharedHousing(listing);
+      const roomOffer = isRoomOffer(listing);
+      if (filters.housingType === "room" && !roomOffer) return false;
       if (filters.housingType === "shared" && !sharedHousing) return false;
       if (filters.housingType === "whole" && sharedHousing) return false;
       if (filters.source !== "all" && listing.source !== filters.source) return false;
@@ -265,9 +267,10 @@ export default function Home() {
       <section className="filters" aria-label="Filtry">
         <div className="pill-group" aria-label="Typ bydlení">
           {[
-            ["all", "Všechny možnosti"],
+            ["room", "Pokoje"],
             ["shared", "Spolubydlení"],
             ["whole", "Celé byty"],
+            ["all", "Všechny možnosti"],
           ].map(([value, label]) => (
             <button
               key={value}
