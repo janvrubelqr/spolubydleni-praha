@@ -190,31 +190,50 @@ export default function Home() {
             placeholder="Hledat adresu, cast nebo zdroj"
           />
         </label>
-        <label>
+        <div className="filter-pills" aria-label="Zdroj">
           <span>Zdroj</span>
-          <select
-            value={filters.source}
-            onChange={(event) => setFilters({ ...filters, source: event.target.value })}
-          >
-            <option value="all">Vsechny zdroje</option>
+          <div className="pill-row">
+            <button
+              type="button"
+              className={filters.source === "all" ? "pill active" : "pill"}
+              onClick={() => setFilters({ ...filters, source: "all" })}
+            >
+              Vsechny
+            </button>
             {options.sources.map((source) => (
-              <option key={source} value={source}>
+              <button
+                key={source}
+                type="button"
+                className={filters.source === source ? "pill active" : "pill"}
+                onClick={() => setFilters({ ...filters, source })}
+              >
                 {source}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
-        <label>
+          </div>
+        </div>
+        <div className="filter-pills" aria-label="Typ">
           <span>Typ</span>
-          <select value={filters.rooms} onChange={(event) => setFilters({ ...filters, rooms: event.target.value })}>
-            <option value="all">Vsechny dispozice</option>
+          <div className="pill-row">
+            <button
+              type="button"
+              className={filters.rooms === "all" ? "pill active" : "pill"}
+              onClick={() => setFilters({ ...filters, rooms: "all" })}
+            >
+              Vsechny
+            </button>
             {options.rooms.map((rooms) => (
-              <option key={rooms} value={rooms}>
+              <button
+                key={rooms}
+                type="button"
+                className={filters.rooms === rooms ? "pill active" : "pill"}
+                onClick={() => setFilters({ ...filters, rooms })}
+              >
                 {rooms}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
         <label>
           <span>Max Kc</span>
           <input
