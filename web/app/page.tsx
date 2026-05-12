@@ -42,6 +42,15 @@ function formatNumber(value: number | null) {
   return new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 0 }).format(value);
 }
 
+function formatSource(source: string) {
+  const labels: Record<string, string> = {
+    sreality: "Sreality",
+    realingo: "Realingo",
+    ulovdomov: "UlovDomov",
+  };
+  return labels[source] ?? source;
+}
+
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -207,7 +216,7 @@ export default function Home() {
                 className={filters.source === source ? "pill active" : "pill"}
                 onClick={() => setFilters({ ...filters, source })}
               >
-                {source}
+                {formatSource(source)}
               </button>
             ))}
           </div>
@@ -288,7 +297,7 @@ export default function Home() {
                       <strong>{listing.district ?? listing.address ?? "-"}</strong>
                       <span>{listing.address ?? listing.title}</span>
                     </td>
-                    <td>{listing.source}</td>
+                    <td>{formatSource(listing.source)}</td>
                     <td>
                       <a href={listing.url} target="_blank" rel="noreferrer" aria-label="Otevřít inzerát">
                         <ExternalLink size={16} />

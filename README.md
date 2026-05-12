@@ -45,6 +45,8 @@ Na Windows muzes misto `cp` pouzit `copy .env.example .env`. Pokud pouzivas
 ```bash
 python -m scrapers.sreality
 python -m scrapers.realingo
+python -m scrapers.ulovdomov
+python -m scrapers.run_all
 ```
 
 Po dobehnuti zkontroluj v Supabase tabulky `listings`, `price_history` a
@@ -69,6 +71,8 @@ Do `web/.env.local` patri `NEXT_PUBLIC_SUPABASE_URL` a anon klic
 - [x] Sreality scraper pres verejne JSON API
 - [x] Realingo scraper pres Next.js `__NEXT_DATA__` na prvni strance vysledku
 - [x] Realingo strankovani pres GraphQL `first`/`skip`
+- [x] UlovDomov scraper pres verejne JSON API
+- [x] Spolecny runner pro vsechny scrapery
 - [x] Next.js dashboard s filtry, tabulkou a mapou
 - [x] Idempotentni upsert pres `(source, source_id)`
 - [x] Tracking zmen cen v `price_history`
@@ -91,11 +95,33 @@ plochu, adresu a GPS souradnice.
 Delisting se pro Realingo spusti jen tehdy, kdyz scraper projde vsechny dostupne
 stranky. Pocet stran lze omezit pres `REALINGO_MAX_PAGES`.
 
+### UlovDomov
+
+UlovDomov se nacita pres JSON API `https://ud.api.ulovdomov.cz/v1/offer/find`.
+Scraper uklada prazske pronajmy bytu vcetne ceny, dispozice, plochy, adresy,
+GPS souradnic a syroveho JSONu. Portal ma dobry obsah pro pokoje, studenty a
+spolubydleni, ale externi API filtr pro spolubydleni neni stabilni, proto se
+nacita sirsi sada prazskych pronajmu a spolubydleni se dal filtruje v UI.
+
+Pocet stran lze omezit pres `ULOVDOMOV_MAX_PAGES`.
+
+### Spolecne spusteni
+
+```bash
+python -m scrapers.run_all
+```
+
+Vychozi zdroje jsou `sreality,realingo,ulovdomov`. Vyber lze zmenit pres
+`SCRAPER_SOURCES`, napriklad:
+
+```bash
+SCRAPER_SOURCES=realingo,ulovdomov python -m scrapers.run_all
+```
+
 ## Co nasleduje
 
 **Faze 2 - dalsi portaly:**
 
-- [ ] Ulovdomov (studenti + spolubydleni)
 - [ ] Bezrealitky (Playwright + proxy, GraphQL je za antibotem)
 - [ ] Flatio (kratkodobe pronajmy)
 - [ ] HousingAnywhere, Spareroom (mezinarodni)

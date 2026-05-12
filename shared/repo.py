@@ -25,7 +25,7 @@ class SupabaseRepo:
         load_dotenv(override=False)
         load_dotenv(".env.local", override=False)
 
-        url = url or os.getenv("SUPABASE_URL")
+        url = url or os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
         service_key = service_key or os.getenv("SUPABASE_SERVICE_KEY")
 
         if not url or not service_key:
