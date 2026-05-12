@@ -52,6 +52,13 @@ function formatSource(source: string) {
   return labels[source] ?? source;
 }
 
+function resolveDistrict(listing: Listing) {
+  const text = [listing.district, listing.address, listing.title].filter(Boolean).join(" ");
+  const match = text.match(/Praha\s*\d+/i);
+  if (!match) return listing.district || "Praha bez určení";
+  return match[0].replace(/\s+/, " ").replace(/^praha/i, "Praha");
+}
+
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -171,6 +178,55 @@ export default function Home() {
       priceM2Avg,
       mapped: filteredListings.filter((listing) => listing.lat && listing.lon).length,
     };
+  }, [filteredListings]);
+
+  const districtStats = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        district: string;
+        count: number;
+        priceSum: number;
+        pricedCount: number;
+        priceM2Sum: number;
+        priceM2Count: number;
+      }
+    >();
+
+    for (const listing of filteredListings) {
+      const district = resolveDistrict(listing);
+      const group =
+        groups.get(district) ??
+        {
+          district,
+          count: 0,
+          priceSum: 0,
+          pricedCount: 0,
+          priceM2Sum: 0,
+          priceM2Count: 0,
+        };
+
+      group.count += 1;
+      if (listing.price_czk) {
+        group.priceSum += listing.price_czk;
+        group.pricedCount += 1;
+      }
+      if (listing.price_per_m2) {
+        group.priceM2Sum += listing.price_per_m2;
+        group.priceM2Count += 1;
+      }
+      groups.set(district, group);
+    }
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        district: group.district,
+        count: group.count,
+        share: filteredListings.length ? Math.round((group.count / filteredListings.length) * 100) : 0,
+        priceAvg: group.pricedCount ? Math.round(group.priceSum / group.pricedCount) : null,
+        priceM2Avg: group.priceM2Count ? Math.round(group.priceM2Sum / group.priceM2Count) : null,
+      }))
+      .sort((a, b) => b.count - a.count || a.district.localeCompare(b.district, "cs"));
   }, [filteredListings]);
 
   const selectedListing = filteredListings.find((listing) => listing.id === selectedId) ?? filteredListings[0];
@@ -368,7 +424,35 @@ export default function Home() {
             </tbody>
           </table>
         </div>
-        <MapView listings={filteredListings} selectedId={selectedListing?.id ?? null} onSelect={setSelectedId} />
+        <aside className="side-panel">
+          <section className="district-stats" aria-label="Statistiky podle částí Prahy">
+            <div className="panel-heading">
+              <strong>Části Prahy</strong>
+              <span>{formatNumber(districtStats.length)}</span>
+            </div>
+            <div className="district-list">
+              {districtStats.length ? (
+                districtStats.map((district) => (
+                  <div className="district-row" key={district.district}>
+                    <div>
+                      <strong>{district.district}</strong>
+                      <span>
+                        {formatNumber(district.count)} nabídek · {district.share} %
+                      </span>
+                    </div>
+                    <div>
+                      <strong>{formatPrice(district.priceAvg)}</strong>
+                      <span>{district.priceM2Avg ? `${formatNumber(district.priceM2Avg)} Kč/m²` : "bez m²"}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="district-empty">Žádné statistiky pro aktuální filtr.</div>
+              )}
+            </div>
+          </section>
+          <MapView listings={filteredListings} selectedId={selectedListing?.id ?? null} onSelect={setSelectedId} />
+        </aside>
       </section>
     </main>
   );

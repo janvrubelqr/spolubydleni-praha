@@ -260,6 +260,72 @@ p {
   max-width: 1440px;
 }
 
+.side-panel {
+  display: grid;
+  gap: 14px;
+  grid-template-rows: auto minmax(360px, 1fr);
+  min-width: 0;
+}
+
+.district-stats {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel-heading {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.panel-heading span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.district-list {
+  display: grid;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.district-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+  padding: 10px 12px;
+}
+
+.district-row:last-child {
+  border-bottom: 0;
+}
+
+.district-row > div:last-child {
+  text-align: right;
+}
+
+.district-row strong {
+  display: block;
+}
+
+.district-row span,
+.district-empty {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.district-empty {
+  padding: 14px 12px;
+}
+
 .table-wrap {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -320,8 +386,14 @@ td a {
   overflow: hidden;
 }
 
+.side-panel .map-shell {
+  height: auto;
+  min-height: 360px;
+}
+
 .map {
   height: 100%;
+  min-height: 360px;
   width: 100%;
 }
 
@@ -384,6 +456,10 @@ td a {
     grid-template-columns: 1fr;
   }
 
+  .side-panel {
+    grid-template-rows: auto minmax(420px, auto);
+  }
+
   .manual-import-actions {
     grid-template-columns: 1fr;
   }
@@ -418,6 +494,14 @@ td a {
 
   .pill {
     width: 100%;
+  }
+
+  .district-row {
+    grid-template-columns: 1fr;
+  }
+
+  .district-row > div:last-child {
+    text-align: left;
   }
 
   th:nth-child(3),
