@@ -12,6 +12,7 @@ const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 type Filters = {
   query: string;
+  housingType: string;
   source: string;
   rooms: string;
   maxPrice: string;
@@ -20,6 +21,7 @@ type Filters = {
 
 const initialFilters: Filters = {
   query: "",
+  housingType: "all",
   source: "all",
   rooms: "all",
   maxPrice: "",
@@ -83,11 +85,9 @@ export default function Home() {
   }, []);
 
   const options = useMemo(() => {
-    const sharedListings = listings.filter(isSharedHousing);
-
     return {
-      sources: Array.from(new Set(sharedListings.map((item) => item.source))).sort(),
-      rooms: Array.from(new Set(sharedListings.map((item) => item.rooms).filter(Boolean))).sort() as string[],
+      sources: Array.from(new Set(listings.map((item) => item.source))).sort(),
+      rooms: Array.from(new Set(listings.map((item) => item.rooms).filter(Boolean))).sort() as string[],
     };
   }, [listings]);
 
@@ -97,7 +97,9 @@ export default function Home() {
     const minSize = filters.minSize ? Number(filters.minSize) : null;
 
     return listings.filter((listing) => {
-      if (!isSharedHousing(listing)) return false;
+      const sharedHousing = isSharedHousing(listing);
+      if (filters.housingType === "shared" && !sharedHousing) return false;
+      if (filters.housingType === "whole" && sharedHousing) return false;
       if (filters.source !== "all" && listing.source !== filters.source) return false;
       if (filters.rooms !== "all" && listing.rooms !== filters.rooms) return false;
       if (maxPrice && (!listing.price_czk || listing.price_czk > maxPrice)) return false;
@@ -137,7 +139,7 @@ export default function Home() {
       <header className="topbar">
         <div>
           <h1>Spolubydleni Praha</h1>
-          <p>Pokoje a nabidky vhodne pro spolubydleni</p>
+          <p>Pronajmy, pokoje a nabidky vhodne pro spolubydleni</p>
         </div>
         <button className="icon-button" onClick={loadListings} aria-label="Obnovit data">
           <RefreshCcw size={18} />
@@ -174,6 +176,17 @@ export default function Home() {
         </label>
         <label>
           <Filter size={16} />
+          <select
+            value={filters.housingType}
+            onChange={(event) => setFilters({ ...filters, housingType: event.target.value })}
+          >
+            <option value="all">Vsechny moznosti</option>
+            <option value="shared">Spolubydleni</option>
+            <option value="whole">Cele byty</option>
+          </select>
+        </label>
+        <label>
+          <span>Zdroj</span>
           <select
             value={filters.source}
             onChange={(event) => setFilters({ ...filters, source: event.target.value })}
@@ -260,7 +273,7 @@ export default function Home() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={6}>Zadne nabidky spolubydleni pro aktualni filtr.</td>
+                    <td colSpan={6}>Zadne nabidky pro aktualni filtr.</td>
                   </tr>
                 )
               )}

@@ -93,7 +93,7 @@ p {
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(240px, 1fr) 180px 180px 120px 120px;
+  grid-template-columns: minmax(240px, 1fr) 170px 160px 160px 120px 120px;
   margin: 0 auto 14px;
   max-width: 1440px;
   padding: 10px;
